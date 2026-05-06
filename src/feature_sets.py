@@ -6,6 +6,9 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
 
+# set seed for reproducibility 
+np.random.seed(seed=333)
+
 # read in data
 df = pd.read_csv('../data/asample2_withlag.csv')
 
@@ -18,11 +21,6 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.3, random_state=333
 )
 
-# compute the null mse so we can calc the R2
-y_mean = np.mean(y_train)
-null_preds = np.full_like(y_test, y_mean)
-null_mse = mean_squared_error(y_test, null_preds)
-
 feature_names = np.array(X_train.columns)
 
 def run_one(k, seed):
@@ -30,6 +28,7 @@ def run_one(k, seed):
     cols = rng.choice(feature_names, size=k, replace=False)
 
     model = XGBRegressor(n_jobs=1,
+                        random_state=seed, # for reproducibility
                         n_estimators = 90, 
                         max_depth = 2, 
                         learning_rate = 0.3, 
