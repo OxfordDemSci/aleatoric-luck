@@ -44,7 +44,7 @@ def run_one(k, seed):
     mse = mean_squared_error(y_test, preds)
     r2 = r2_score(y_test, preds)
 
-    return k, mse, r2
+    return k, seed, mse, r2
 
 results = [] 
 
@@ -63,7 +63,7 @@ out = Parallel(n_jobs=-1, batch_size=10)(
     delayed(run_one)(k, seed) for k, seed in jobs
 )
 
-results = [{"k": k, "mse": mse, "r2": r2} for k, mse, r2 in out]
+results = [{"k": k, "seed": seed, "mse": mse, "r2": r2} for k, mse, seed, r2 in out]
 
 results_df = pd.DataFrame(results)
 
