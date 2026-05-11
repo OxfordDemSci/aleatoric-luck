@@ -5,12 +5,18 @@ from sklearn.metrics import mean_squared_error
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
+from pathlib import Path
 
 # set seed for reproducibility 
 np.random.seed(seed=333)
 
 # read in data
-df = pd.read_csv('../data/asample2_withlag.csv')
+ROOT = Path(__file__).resolve().parents[1]
+DATA = ROOT / "data" / "asample2_withlag.csv"
+OUT = ROOT / "outputs" / "feature_sets.csv"
+OUT.parent.mkdir(parents=True, exist_ok=True)
+
+df = pd.read_csv(DATA)
 
 # construct X and y
 y = df["Cm_lhourlywage"]
@@ -63,8 +69,8 @@ out = Parallel(n_jobs=-1, batch_size=10)(
     delayed(run_one)(k, seed) for k, seed in jobs
 )
 
-results = [{"k": k, "seed": seed, "mse": mse, "r2": r2} for k, mse, seed, r2 in out]
+results = [{"k": k, "seed": seed, "mse": mse, "r2": r2} for k, seed, mse, r2 in out]
 
 results_df = pd.DataFrame(results)
 
-results_df.to_csv("../outputs/feature_sets.csv", index=False)
+results_df.to_csv(OUT, index=False)
