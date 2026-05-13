@@ -35,7 +35,7 @@ data_sets = {
 
 all_results = []
 
-for data_name, data_cols in data_sets.values():
+for data_name, data_cols in data_sets.items():
 
     X = df[data_cols]
 
