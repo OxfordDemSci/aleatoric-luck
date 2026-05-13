@@ -97,6 +97,6 @@ for data_name, data_cols in data_sets.items():
 
     all_results.extend(results)
 
-results_df = pd.DataFrame(results)
+results_df = pd.DataFrame(all_results)
 
 results_df.to_csv(OUT, index=False)
