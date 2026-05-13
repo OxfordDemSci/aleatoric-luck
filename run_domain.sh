@@ -13,8 +13,6 @@ cd /gpfs3/users/mills/tej036/aleatoric-luck
 
 source ~/venvs/aleatoric-luck/bin/activate
 
-echo "starting to run at " 'date'
-
 python src/domain_wise.py
 
 echo "All done!"

@@ -13,7 +13,7 @@ np.random.seed(seed=333)
 # read in data
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data" / "asample2_withlag.csv"
-OUT = ROOT / "outputs" / "feature_sets.csv"
+OUT = ROOT / "outputs" / "domain_wise.csv"
 OUT.parent.mkdir(parents=True, exist_ok=True)
 
 df = pd.read_csv(DATA)
