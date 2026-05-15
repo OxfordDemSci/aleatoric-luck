@@ -68,8 +68,15 @@ for data_name, data_cols in data_sets.items():
 
         return k, seed, mse, r2
 
-    # logspace, picks 20 numbers between 1 and 4000+ (max no of features)
-    sizes = np.unique(np.logspace(0, np.log2(len(feature_names)), num=20, base=2).astype(int)) 
+    # percentages of the full feature set, same pattern for every dataset
+    fractions = np.logspace(np.log10(0.01), 0, num=20)   # 1% to 100%
+    sizes = np.unique(
+        np.clip(
+            np.round(fractions * len(feature_names)).astype(int),
+            1,
+            len(feature_names),
+        )
+    )
     # and then does 50 random draws of combinations of that many features 
     n_draws = 50 
 
