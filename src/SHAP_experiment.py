@@ -7,6 +7,8 @@ from pathlib import Path
 import logging
 import sys
 import time 
+from joblib import Parallel, delayed
+import os 
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data" / "asample2_withlag.csv"
@@ -35,7 +37,6 @@ def setup_logger(log_file: Path) -> logging.Logger:
 
 logger = setup_logger(LOG_FILE)
 
-t0 = time.perf_counter()
 logger.info("Starting SHAP ordering exp")
 
 df = pd.read_csv(DATA)
@@ -51,70 +52,70 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.3, random_state=333
 )
 
-logger.info(
-    "loaded data: X=%s, y=%s, train=%s, test=%s, n_features=%d",
-    X.shape,
-    y.shape,
-    X_train.shape,
-    X_test.shape,
-    len(ordered_features),
-)
+N_JOBS = int(os.environ.get("SLURM_CPUS_PER_TASK", "1"))
+logger.info("Using %d parallel workers", N_JOBS)
+logger.info("Number of features: %d", len(ordered_features))
 
-results = []
+def run_one_k(k: int):
+    feats_hi = ordered_features[:k]
+    feats_lo = ordered_features[-k:]
 
-try:
-    for k in range(1, len(ordered_features) + 1):
-        k_start = time.perf_counter()
-
-        feats_hi = ordered_features[:k]
-        feats_lo = ordered_features[-k:]
-
-        for label, feats in [("high_to_low", feats_hi), ("low_to_high", feats_lo)]:
-            fit_start = time.perf_counter()
-
-            model = xgb.XGBRegressor(
+    rows = []
+    for label, feats in [("high_to_low", feats_hi), ("low_to_high", feats_lo)]:
+        model = xgb.XGBRegressor(
                 n_estimators=90,
                 max_depth=2,
                 learning_rate=0.3,
                 objective="reg:squarederror",
                 random_state=333,
                 verbosity=0,
+                n_jobs = 1,
             )
-            model.fit(X_train[feats], y_train)
-            preds = model.predict(X_test[feats])
+        model.fit(X_train[feats], y_train)
+        preds = model.predict(X_test[feats])
 
-            mse = mean_squared_error(y_test, preds)
-            r2 = r2_score(y_test, preds)
+        rows.append({
+            "k": k,
+            "direction": label,
+            "mse": mean_squared_error(y_test, preds),
+            "r2": r2_score(y_test, preds)
+        })
 
-            results.append({
-                "k": k,
-                "direction": label,
-                "mse": mse,
-                "r2": r2,
-            })
+        return rows
+    
+ks = list(range(1, len(ordered_features) + 1))
 
-            logger.info(
-                "k=%d | %s | fit+predict=%.2fs | mse=%.6f | r2=%.6f",
-                k,
-                label,
-                time.perf_counter() - fit_start,
-                mse,
-                r2
-            )
-        
-        pd.DataFrame(results).to_csv(PARTIAL_OUT, index = False)
+all_results = []
+batch_size = 50
 
-        logger.info(
-            "finished k=%d in %.2fs | saved checkpoint to %s",
-            k, 
-            time.perf_counter() - k_start,
-            PARTIAL_OUT.name
+t0 = time.perf_counter()
+
+
+
+try:
+    for start in range(0, len(ks), batch_size):
+        batch = ks[start:start + batch_size]
+        logger.info("starting batch %d-%d", batch[0], batch[-1])
+
+        batch_results = Parallel(n_jobs = N_JOBS, backend="loky", verbose=0)(
+            delayed(run_one_k)(k) for k in batch
         )
+
+        for rows in batch_results:
+            all_results.extend(rows)
+
+        pd.DataFrame(all_results).to_csv(PARTIAL_OUT, index=False)
+        logger.info(
+            "saved checkpoint with %d rows after %.2fs", 
+            len(all_results),
+            time.perf_counter() - t0,
+        )
+        
 except Exception:
     logger.exception("Experiment failed")
     raise
 
-results_df = pd.DataFrame(results)
+results_df = pd.DataFrame(all_results)
 results_df.to_csv(OUT, index=False)
 
 if PARTIAL_OUT.exists():
