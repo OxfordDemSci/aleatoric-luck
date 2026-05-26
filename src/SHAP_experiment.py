@@ -21,7 +21,7 @@ def setup_logger(log_file: Path) -> logging.Logger:
     logger.setLevel(logging.INFO)
     logger.handlers.clear()
 
-    fmt = logging.FileHandler(log_file)
+    fmt = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
 
     fh = logging.FileHandler(log_file)
     fh.setFormatter(fmt)
