@@ -47,7 +47,8 @@ mean_abs_shap = np.abs(shap_values).mean(axis=0)
 shap_importance = pd.Series(mean_abs_shap, index = predictors_all)
 shap_importance = shap_importance.sort_values(ascending = False)
 
-shap_importance.reset_index().rename(columns={"index": "feature", 0: "mean_abs_shap"}).to_csv(
+shap_importance.reset_index().rename(
+    columns={"index": "feature", 0: "mean_abs_shap"}).to_csv(
     OUT, index=False
 )
 
