@@ -4,11 +4,15 @@ import xgboost as xgb
 import shap
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
-import os
-
+from pathlib import Path
 # load data define features
 
-asample2 = pd.read_csv("../data/asample2_withlag.csv")
+ROOT = Path(__file__).resolve().parents[1]
+DATA = ROOT / "data" / "asample2_withlag.csv"
+OUT = ROOT / "outputs" / "shap_importance.csv"
+OUT.parent.mkdir(parents=True, exist_ok=True)
+
+asample2 = pd.read_csv(DATA)
 
 predictors_all = [col for col in asample2.columns if "Aset" in col or "Bset" in col]
 
@@ -44,7 +48,7 @@ shap_importance = pd.Series(mean_abs_shap, index = predictors_all)
 shap_importance = shap_importance.sort_values(ascending = False)
 
 shap_importance.reset_index().rename(columns={"index": "feature", 0: "mean_abs_shap"}).to_csv(
-    "../outputs/shap_importance", index=False
+    OUT, index=False
 )
 
 print("SHAP values ranking saved to ../outputs/shap_importance.csv")
