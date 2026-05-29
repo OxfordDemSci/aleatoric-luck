@@ -125,7 +125,7 @@ Key packages (pinned versions in `requirements.txt`):
 
 ## Reference
 
-> Zheng, H., & Cheng, S. (2025). *[Title]*. [Journal]. [DOI]
+> Zheng, H., & Cheng, S. (2025). Social Rigidity Across and Within Generations: A Predictive Approach. Sociological Methods & Research, 54(4), 1683-1725.
 
 ---
 
