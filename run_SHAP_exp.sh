@@ -4,6 +4,7 @@
 #SBATCH -e logs/%x-%j.err
 #SBATCH -t 02:00:00
 #SBATCH -p short
+#SBATCH --cpus-per-task=8
 
 module purge
 module load Python/3.11

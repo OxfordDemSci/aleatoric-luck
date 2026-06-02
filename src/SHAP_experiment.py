@@ -81,7 +81,7 @@ def run_one_k(k: int):
             "r2": r2_score(y_test, preds)
         })
 
-        return rows
+    return rows
     
 ks = list(range(1, len(ordered_features) + 1))
 
