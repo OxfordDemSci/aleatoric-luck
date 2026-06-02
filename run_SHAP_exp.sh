@@ -2,7 +2,7 @@
 #SBATCH -J aleatoric
 #SBATCH -o logs/%x-%j.out
 #SBATCH -e logs/%x-%j.err
-#SBATCH -t 02:00:00
+#SBATCH -t 24:00:00
 #SBATCH -p short
 #SBATCH --cpus-per-task=8
 
