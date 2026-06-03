@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.metrics import mean_squared_error, r2_score
 import xgboost as xgb
 from pathlib import Path
-
+from joblib import Parallel, delayed
 from sklearn.model_selection import train_test_split
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,49 +26,47 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.3, random_state=123
 )
 
-n_min = 50
+
 n_max = len(X_train)
 
 samp_size = np.unique(
-    np.round(np.logspace(np.log10(n_min), np.log10(n_max), 40)).astype(int)
+    np.round(np.logspace(0, np.log10(n_max), 20)).astype(int)
 )
 
-results = []
-rng = np.random.default_rng(333)
-n_repeats = 5
-
-
-model = xgb.XGBRegressor(
-    random_state=333,
-    n_estimators=90,
-    max_depth=2,
-    learning_rate=0.3,
-    objective="reg:squarederror",
-    verbosity=0,
-    n_jobs=1,
-)
-
+master_seed = 333
+n_repeats = 50
 train_idx = X_train.index.to_numpy()
 
-for s in samp_size:
-    for rep in range(n_repeats):
-        samp_idx = rng.choice(train_idx, size=s, replace=False)
-        X_samp = X_train.loc[samp_idx]
-        y_samp = y_train.loc[samp_idx]
+def run_one(s, rep):
+    rng = np.random.default_rng(master_seed + s * 1000 + rep)
+    samp_idx = rng.choice(train_idx, size=s, replace=False)
 
-        model.fit(X_samp, y_samp)
-        preds = model.predict(X_test)
+    X_samp = X_train.loc[samp_idx]
+    y_samp = y_train.loc[samp_idx]
 
-        mse = mean_squared_error(y_test, preds)
-        r2 = r2_score(y_test, preds)
+    model = xgb.XGBRegressor(
+        random_state=master_seed,
+        n_estimators=90,
+        max_depth=2,
+        learning_rate=0.3,
+        objective="reg:squarederror",
+        verbosity=0,
+        n_jobs=1,
+    )
 
-        results.append({
-            "n_samples": s,
-            "rep": rep,
-            "mse": mse,
-            "r2": r2
-        })
+    model.fit(X_samp, y_samp)
+    preds = model.predict(X_test)
 
-results_df = pd.DataFrame(results)
+    mse = mean_squared_error(y_test, preds)
+    r2 = r2_score(y_test, preds)
 
+    return s, rep, mse, r2
+
+jobs = [(s, rep) for s in samp_size for rep in range(n_repeats)]
+
+results = Parallel(n_jobs=-1, backend="loky")(
+    delayed(run_one)(s, rep) for s, rep in jobs
+)
+
+results_df = pd.DataFrame(results, columns=["n_samples", "rep", "mse", "r2"])
 results_df.to_csv(OUT, index=False)
