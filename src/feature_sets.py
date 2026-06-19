@@ -8,7 +8,7 @@ from sklearn.metrics import r2_score
 from pathlib import Path
 
 # set seed for reproducibility 
-np.random.seed(seed=333)
+np.random.seed(seed=123)
 
 # read in data
 ROOT = Path(__file__).resolve().parents[1]
@@ -24,7 +24,7 @@ predictors = [col for col in df.columns if "Aset" in col or "Bset" in col]
 X = df[predictors]
 
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.3, random_state=333
+    X, y, test_size=0.3, random_state=123
 )
 
 feature_names = np.array(X_train.columns)

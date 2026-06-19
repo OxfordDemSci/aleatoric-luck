@@ -3,8 +3,8 @@
 #SBATCH -o logs/%x-%j.out
 #SBATCH -e logs/%x-%j.err
 #SBATCH -t 24:00:00
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=16G
+#SBATCH --cpus-per-task=32
+#SBATCH --mem=64G
 
 module purge
 module load Python/3.11
