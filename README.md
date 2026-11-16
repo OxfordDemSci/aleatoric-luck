@@ -1,3 +1,5 @@
+> **This repository has moved to https://github.com/avakeeling199/aleatoric-luck**
+
 # Aleatoric Luck
 
 > **Oxford Leverhulme Centre for Demographic Science**
